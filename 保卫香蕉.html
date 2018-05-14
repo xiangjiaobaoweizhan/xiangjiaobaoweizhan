@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <style type="text/css">
+        input {
+            background-color: rgba(80,80,255,0.5);
+            width: 100px;
+            height: 50px;
+            font-family: "arial narrow";
+            font-size: 20px;
+            border-radius: 10px;
+        }
+
+            input:hover {
+                font-weight: bold;
+                cursor: pointer;
+                background-color: rgba(0,100,255,0.5);
+                transition: all 2s;
+                margin: 20px;
+                border-radius: 10px;
+                border: 2px solid black;
+            }
+
+        img:hover {
+            cursor: crosshair;
+        }
+
+        #d2 {
+            width: 250px;
+            height: 50px;
+            border: 2px solid blue;
+            display: inline-block;
+            overflow: hidden;
+            float: left;
+            position: relative;
+            margin-top: -500px;
+        }
+
+        #d3 {
+            transition: all 5s;
+            display: inline-block;
+            background: yellow;
+            height: 50px;
+        }
+
+        .body_div {
+            width: 1880px;
+            height: 880px;
+            background-image: url(banana.png);
+            background-size: 1819px 1000px;
+            border: 2px red solid;
+        }
+
+        #jifenban {
+            width: 400px;
+            height: 250px;
+            padding-left: 50px;
+            padding-top: 80px;
+            border: 3px blue solid;
+            position: relative;
+            margin: auto;
+            margin-top: 200px;
+        }
+    </style>
+    <script src=lib/jquery-3.3.1.min.js></script>
+    <script src=lib/nebPay.js></script>
+    <script src=lib/bootstrap-4.0.0-dist/js/bootstrap.min.js></script>
+    <script src=lib/nebulas.js></script>
+    <script type="text/javascript">
+        var count = 0;
+        var dingshiqi;  //定时器产生星星
+        var gametime = 0;//游戏时间
+        var n = 0;
+        var score = 0;
+        var monkey;
+        var xingxing;
+        var lavel1 = document.getElementById("lavel");
+        var lavel = 0;
+        function starGame() {
+            window.clearInterval(gametime);   //清除之前的定时器
+            window.clearInterval(dingshiqi); //清除之前的定时器
+            dingshiqi = window.setInterval("time()", 1000);
+            gametime = window.setInterval("star()", 1000);
+        }
+        function star() {
+            var obj = document.createElement("img");//创建图片
+            var r = Math.random() * 10;
+            if (r > 1) {
+                obj.src = "1.gif";//图片路径为星星
+                monkey = obj.src;
+            }
+            else {
+                obj.src = "1.png";
+                xingxing = obj.src;
+            }
+            var w = Math.floor(Math.random() * 80 + 20);//随机大小
+            obj.width = w;  //随机位置
+            document.body.appendChild(obj);
+            var x = Math.floor(Math.random() * 1166 + 100);
+            var y = Math.floor(Math.random() * 500 + 100);
+            obj.style.position = "absolute";
+            obj.style.top = y + "px";
+            obj.style.left = x + "px";
+            obj.onclick = removeStar;  //本身被点击时调用函数
+            document.body.appendChild(obj);//放到body里面
+            count++;//星星数目++
+            var sp = document.getElementById("d3");  //进度条
+            sp.style.width = count * 12 + "px"; //有一个星星进度条宽度加5；
+            if (count <= 8) {
+                sp.style.backgroundColor = "green";
+            }
+            else if (count > 8 && count <= 17) {
+                sp.style.backgroundColor = "yellow";
+            }
+            else if (count > 17 && count <= 25) {
+                sp.style.backgroundColor = "orange";
+            }
+            else if (count > 25 && count <= 30) {
+                sp.style.backgroundColor = "red";
+            }
+            if (count >= 30) {
+                window.clearInterval(dingshiqi);
+                window.clearInterval(gametime);
+                alert("游戏结束,您的香蕉被猩猩和猴子吃完了，您的得分为" + score);
+
+                var address = "n1hHA18QGk858hXXezVLMbEECBYJoMYbJcM";
+
+                var nebulas = require("nebulas"),
+                    Account = nebulas.Account,
+                    neb = new nebulas.Neb();
+                neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"));
+
+                var from = Account.NewAccount().getAddressString();
+                var value = "0";
+                var nonce = "0";
+                var gas_price = "1000000";
+                var gas_limit = "2000000";
+
+                var useFunction = "get";
+                var useArgs = "[\"" + score + "\"]";
+                var contract = {
+                    "function": useFunction,
+                    "args": useArgs
+                };
+                neb.api.call(from, address, value, nonce, gas_price, gas_limit, contract).then(function (resp) {
+                    var result = resp.result;
+                    if (result == null) {
+                        alert("处理失败!");
+                    }
+                    else {
+                        try {
+                            result = JSON.parse(result)
+                        } catch (err) {
+                            alert(err);
+                        }
+                        alert("你的评分是:" + result);
+                        reset();
+                    }
+                });
+                document.getElementById("lavel").innerHTML = "正在评分";
+            }
+
+
+        }
+        function reset() {
+            n = 0;
+            window.clearInterval(dingshiqi);
+            location.reload();
+        }
+        function removeStar() {
+            if (this.src == monkey) {
+                score += 5;
+            }
+            else if (this.src == xingxing) {
+                score += 10;
+            }
+            var jifenban = document.getElementById("s");
+            jifenban.innerHTML = score;
+            this.parentNode.removeChild(this);//调用父亲来删除本身；
+            count--;
+            var sp = document.getElementById("d3");  //进度条
+            sp.style.width = count * 5 + "px"; //有一个星星进度条宽度加5；
+            if (count <= 8) {
+                sp.style.backgroundColor = "green";
+            }
+            else if (count > 8 && count <= 17) {
+                sp.style.backgroundColor = "yellow";
+            }
+            else if (count > 17 && count <= 25) {
+                sp.style.backgroundColor = "orange";
+            }
+            else if (count > 25 && count <= 30) {
+                sp.style.backgroundColor = "red";
+            }
+        }
+        function stopGame() {
+            alert("暂停游戏");    //alert出来时定时器会暂停；
+        }
+        function time() {
+            n++;//游戏时间+1
+            var obj = document.getElementById("id1");
+            obj.innerHTML = n;
+            if (n >= 5 && n < 8) {
+                if (n == 5) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 1200);
+
+            }
+            else if (n >= 8 && n < 15) {
+                if (n == 8) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 900);
+            }
+            else if (n >= 10 && n < 15) {
+                if (n == 10) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 750);
+            }
+            else if (n >= 15 && n < 20) {
+                if (n == 15) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 600);
+            }
+            else if (n >= 25 && n < 30) {
+                if (n == 25) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 500);
+            }
+            else if (n >= 35 && n < 40) {
+                if (n == 35) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 400);
+            }
+            else if (n >= 45) {
+                if (n == 45) {
+                    lavel = lavel + 1; lavel1.innerHTML = "当前难度等级：" + lavel + "级";
+                }
+                window.clearInterval(gametime); //清除之前的定时器
+                gametime = window.setInterval("star()", 300);
+
+            }
+        }
+        function fn1() {
+            location.replace("rule.html");
+        }
+        function replay() {
+            window.clearInterval(dingshiqi);
+            window.clearInterval(gametime);
+            n = 0;
+            window.clearInterval(dingshiqi);
+            location.reload();
+        }
+    </script>
+</head>
+	<body >
+		<div class="body_div">
+		<input type="button" value="查看规则" onclick="fn1()">
+		<input type="button" name="" onclick="starGame()" value="开始游戏" />
+		<input type="button" name="" onclick="stopGame()" value="暂停游戏" />
+		<input type="button" name="" onclick="replay()" value="重新游戏" />
+		<div id="jifenban">游戏进行了<span  id="id1" style="color: red ; font-size: 55px;">0</span>秒<br/>
+		您的得分：<span id="s" style="color: red ; font-size:30px;">0</span>分
+		<h2 id="lavel">当前难度等级：1级 </h2>
+		</div>
+  <span id="d2"><span id="d3"></span></span>
+	<div >
+		
+		
+	</div>
+	</div>
+	</body>
+</html>
